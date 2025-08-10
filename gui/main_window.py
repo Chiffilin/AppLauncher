@@ -1,9 +1,9 @@
 import sys
 import json
 from PySide6.QtCore import QStringListModel
-from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QFileDialog
+from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QFileDialog, QMainWindow
 
-from gui.ui_main_window import Ui_QDialog
+from gui.ui_main_window import Ui_MainWindow
 
 # Логика получения пути к файлу
 def get_executable_path() -> str:
@@ -14,10 +14,10 @@ def get_executable_path() -> str:
     )
     return file_path
 
-class MyMainWindow(QDialog):
+class MyMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.ui = Ui_QDialog()
+        self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
         self.model = QStringListModel()
