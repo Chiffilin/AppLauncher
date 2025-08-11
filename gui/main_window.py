@@ -25,11 +25,16 @@ class MyMainWindow(QMainWindow):
         self.model = QStringListModel()
         self.ui.listView.setModel(self.model)
 
-        # Словарь для хранения полного пути (ключ - имя файла, значение - полный путь)
-        self._app_paths: dict[str, str] = {}
+        # Загружаем все настройки при запуске
+        settings = self.load_settings_from_json()
+        self._app_paths = settings.get("app_paths", {})
+        self.autostart_enabled = settings.get("autostart_enabled", False)
+
+        # Устанавливаем флажок в сохранённое положение
+        self.ui.autostartCheckBox.setChecked(self.autostart_enabled)
+
 
         # Загружаем список при запуске приложения
-        self._app_paths = self.load_apps_from_json()
         self.model.setStringList(list(self._app_paths.keys()))
         print(f"Текущий список программ: {self.model.stringList()}")
 
@@ -71,6 +76,8 @@ class MyMainWindow(QMainWindow):
         Метод, который вызывается при изменении состояния флажка.
         :param checked: True, если флажок установлен, False — если снят.
         """
+        self.autostart_enabled = checked
+
         if checked:
             print("Флажок 'Автозапуск' установлен.")
             # Здесь можно добавить логику для добавления в автозапуск
@@ -80,11 +87,16 @@ class MyMainWindow(QMainWindow):
 
 
 
-
     def closeEvent(self, event) -> None:
-        """Сохраняем список при закрытии окна."""
-        self.save_apps_to_json(self._app_paths)
+        """Сохраняем все настройки при закрытии окна."""
+        settings_to_save = {
+            "app_paths": self._app_paths,
+            "autostart_enabled": self.autostart_enabled
+        }
+        self.save_settings_to_json(settings_to_save)
         event.accept()
+
+
 
     def add_new_app(self, full_path: str) -> None:
         """Добавляет новый путь в словарь, если его там нет, и обновляет отображение."""
@@ -96,44 +108,25 @@ class MyMainWindow(QMainWindow):
         else:
             print("Эта программа уже есть в списке.")
 
-    def save_apps_to_json(self, apps_dict: dict[str, str]) -> None:
-        """Сохраняет словарь путей к программам в JSON-файл."""
+
+    def save_settings_to_json(self, settings_data: dict) -> None:
+        """Сохраняет все настройки в JSON-файл."""
         try:
             with open("autostart_config.json", "w", encoding='utf-8') as file_config:
-                json.dump(apps_dict, file_config, indent=4)
+                json.dump(settings_data, file_config, indent=4)
         except Exception as e:
             print(f"Ошибка при сохранении файла: {e}")
 
-    def load_apps_from_json(self) -> dict[str, str]:
-        """
-        Загружает словарь путей к программам из JSON-файла.
-        Обрабатывает старые форматы, основанные на списках.
-        """
+
+    def load_settings_from_json(self) -> dict:
+        """Загружает все настройки из JSON-файла."""
         try:
             with open("autostart_config.json", "r", encoding='utf-8') as file_config:
-                data = json.load(file_config)
-                # Проверяем, является ли загруженный файл старым форматом
-                if isinstance(data, list):
-                    print("Загружен старый формат файла. Конвертируем в новый формат.")
-                    new_data = {}
-                    for full_path in data:
-                        file_name = os.path.basename(full_path)
-                        new_data[file_name] = full_path
-
-                    return new_data
-
-                # Если это уже словарь, возвращаем его как есть
-                elif isinstance(data, dict):
-                    return data
-
-                # Для любого другого неожиданного формата
-                else:
-                    print("Неизвестный формат файла. Создан пустой словарь.")
-                    return {}
-
+                return json.load(file_config)
         except (FileNotFoundError, json.JSONDecodeError):
-            print("Файл настроек не найден или поврежден. Создан пустой словарь.")
-            return {}
+            print("Файл настроек не найден или поврежден. Созданы настройки по умолчанию.")
+            # Возвращаем настройки по умолчанию, если файл не найден
+            return {"app_paths": {}, "autostart_enabled": False}
 
 def app_start():
     app = QApplication(sys.argv)
