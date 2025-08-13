@@ -2,6 +2,7 @@ import os
 import sys
 
 from PySide6.QtCore import QStringListModel
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow
 
 from app.gui.ui_main_window import Ui_MainWindow
@@ -22,8 +23,18 @@ def get_executable_path() -> str:
 class MyMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        # Меняем заголовок окна
+        self.setWindowTitle("AppLauncher")
+
+        # Абсолютный путь к PNG-иконке
+        icon_path = os.path.join(os.path.dirname(__file__), "resources", "icon.png")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        else:
+            print(f"Иконка не найдена: {icon_path}")
 
         # Модель данных для QListView
         self.model = QStringListModel()
