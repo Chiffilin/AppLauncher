@@ -1,11 +1,13 @@
 import os
 import sys
-import json
 
 from PySide6.QtCore import QStringListModel
-from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QFileDialog, QMainWindow
+from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow
 
-from gui.ui_main_window import Ui_MainWindow
+from app.gui.ui_main_window import Ui_MainWindow
+from app.logic.work_with_json import load_settings_from_json, save_settings_to_json
+from app.logic.work_with_pywin32 import add_app_to_task_scheduler, remove_app_from_task_scheduler
+
 
 # Логика получения пути к файлу
 def get_executable_path() -> str:
@@ -14,6 +16,8 @@ def get_executable_path() -> str:
         None, "Виберіть програму для автозапуску", "", "Програми (*.exe)"
     )
     return file_path
+
+
 
 class MyMainWindow(QMainWindow):
     def __init__(self):
@@ -26,7 +30,7 @@ class MyMainWindow(QMainWindow):
         self.ui.listView.setModel(self.model)
 
         # Загружаем все настройки при запуске
-        settings = self.load_settings_from_json()
+        settings = load_settings_from_json()
         self._app_paths = settings.get("app_paths", {})
         self.autostart_enabled = settings.get("autostart_enabled", False)
 
@@ -80,12 +84,12 @@ class MyMainWindow(QMainWindow):
 
         if checked:
             print("Флажок 'Автозапуск' установлен.")
-            # Здесь можно добавить логику для добавления в автозапуск
+            # self.update_autostart_registry()
+            self.add_all_app_to_task()
         else:
             print("Флажок 'Автозапуск' снят.")
-            # Здесь можно добавить логику для удаления из автозапуска
-
-
+            # self.clear_autostart_registry()
+            self.delete_all_app_from_task()
 
     def closeEvent(self, event) -> None:
         """Сохраняем все настройки при закрытии окна."""
@@ -93,10 +97,8 @@ class MyMainWindow(QMainWindow):
             "app_paths": self._app_paths,
             "autostart_enabled": self.autostart_enabled
         }
-        self.save_settings_to_json(settings_to_save)
+        save_settings_to_json(settings_to_save)
         event.accept()
-
-
 
     def add_new_app(self, full_path: str) -> None:
         """Добавляет новый путь в словарь, если его там нет, и обновляет отображение."""
@@ -108,31 +110,28 @@ class MyMainWindow(QMainWindow):
         else:
             print("Эта программа уже есть в списке.")
 
+    def add_all_app_to_task(self) -> None:
+        """Добавление все приложения в список задач."""
 
-    def save_settings_to_json(self, settings_data: dict) -> None:
-        """Сохраняет все настройки в JSON-файл."""
-        try:
-            with open("autostart_config.json", "w", encoding='utf-8') as file_config:
-                json.dump(settings_data, file_config, indent=4)
-        except Exception as e:
-            print(f"Ошибка при сохранении файла: {e}")
+        # Перебираем наш словарь с приложениями и добавляем каждое в реестр
+        for app_name, app_path in self._app_paths.items():
+            add_app_to_task_scheduler(app_name,app_path)
 
+    def delete_all_app_from_task(self) -> None:
+        """Удаляем все приложения из списка задач."""
 
-    def load_settings_from_json(self) -> dict:
-        """Загружает все настройки из JSON-файла."""
-        try:
-            with open("autostart_config.json", "r", encoding='utf-8') as file_config:
-                return json.load(file_config)
-        except (FileNotFoundError, json.JSONDecodeError):
-            print("Файл настроек не найден или поврежден. Созданы настройки по умолчанию.")
-            # Возвращаем настройки по умолчанию, если файл не найден
-            return {"app_paths": {}, "autostart_enabled": False}
+        # Перебираем наш словарь с приложениями и добавляем каждое в реестр
+        for app_name, app_path in self._app_paths.items():
+            remove_app_from_task_scheduler(app_name)
+
 
 def app_start():
+    print("Приложение запущено. Начало выполнения.")
     app = QApplication(sys.argv)
     window = MyMainWindow()
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     app_start()
