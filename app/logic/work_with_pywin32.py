@@ -2,7 +2,8 @@ import win32com.client
 import traceback
 from datetime import datetime
 
-LOG_FILE = "app_errors.log"
+from app.config import LOG_FILE
+
 
 def log_exception(e):
     """Пишет исключение с трассировкой в лог."""
