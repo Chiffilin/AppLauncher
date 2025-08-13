@@ -81,6 +81,13 @@ class MyMainWindow(QMainWindow):
         index = selected_indexes[0]
         file_name_to_remove = self.model.data(index)
 
+        # Удаляем задачу из автозапуска (если галочка "Автозапуск" установлена)
+        try:
+            remove_app_from_task_scheduler(file_name_to_remove)
+            print(f"Автозапуск для '{file_name_to_remove}' удалён")
+        except Exception as e:
+            print(f"Ошибка при удалении автозапуска: {e}")
+
         # Удаляем из словаря и обновляем модель
         if file_name_to_remove in self._app_paths:
             del self._app_paths[file_name_to_remove]
