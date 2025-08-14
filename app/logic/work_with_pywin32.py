@@ -1,19 +1,6 @@
 import win32com.client
-import traceback
-from datetime import datetime
 
-from app.config import LOG_FILE
-
-
-def log_exception(e):
-    """Пишет исключение с трассировкой в лог."""
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write("\n" + "="*80 + "\n")
-        f.write(f"Время: {datetime.now()}\n")
-        f.write(f"Ошибка: {repr(e)}\n")
-        f.write("Трассировка:\n")
-        f.write("".join(traceback.format_exc()))
-        f.write("="*80 + "\n")
+from app.logic.logger import log_exception
 
 
 def add_app_to_task_scheduler(app_name, app_path):
@@ -70,13 +57,3 @@ def remove_app_from_task_scheduler(app_name):
         log_exception(e)
 
 
-if __name__ == "__main__":
-    # Пример
-    EXE_PATH = r"C:\Windows\System32\notepad.exe"
-    TASK_NAME = "TestAutoStart"
-
-    # Добавить задачу
-    add_task(TASK_NAME, EXE_PATH)
-
-    # Удалить задачу
-    # remove_task(TASK_NAME)

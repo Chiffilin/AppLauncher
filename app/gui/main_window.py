@@ -14,7 +14,7 @@ from app.logic.work_with_pywin32 import add_app_to_task_scheduler, remove_app_fr
 def get_executable_path() -> str:
     """Открывает диалог для выбора исполняемого файла."""
     file_path, _ = QFileDialog.getOpenFileName(
-        None, "Виберіть програму для автозапуску", "", "Програми (*.exe)"
+        None,"Выберите программу или файл для автозапуска", "", "All Files (*)"
     )
     return file_path
 
@@ -30,7 +30,7 @@ class MyMainWindow(QMainWindow):
         self.setWindowTitle("AppLauncher")
 
         # Абсолютный путь к PNG-иконке
-        icon_path = os.path.join(os.path.dirname(__file__), "resources", "icon.png")
+        icon_path = os.path.join(os.path.dirname(__file__), "resources", "icon.ico")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
         else:
@@ -68,6 +68,10 @@ class MyMainWindow(QMainWindow):
         app_path = get_executable_path()
         if app_path:
             self.add_new_app(app_path)
+            # Если автозапуск включен, сразу добавляем задачу в планировщик
+            if self.autostart_enabled:
+                app_name = os.path.basename(app_path)
+                add_app_to_task_scheduler(app_name, app_path)
 
 
     def on_delete_button_clicked(self) -> None:
