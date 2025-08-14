@@ -1,4 +1,4 @@
-# Autostart Manager (AutoBoot)
+# Autostart Manager (AppLauncher)
 
 ### Описание
 
